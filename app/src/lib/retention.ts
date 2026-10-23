@@ -13,6 +13,7 @@ export interface RetentionInfo {
   color: string;
   statusText: string;
   isDue: boolean;
+  timeUntilDue: number; // ms until card becomes due (0 if already due)
 }
 
 export function calculateRetention(
@@ -27,6 +28,7 @@ export function calculateRetention(
       color: '#10b981',
       statusText: 'Fresh',
       isDue: true,
+      timeUntilDue: 0,
     };
   }
 
@@ -57,5 +59,7 @@ export function calculateRetention(
     // A card that has never been reviewed is due immediately; otherwise due
     // once elapsed time passes the stability interval.
     isDue: !lastReviewedAt ? true : elapsedDays >= S,
+    // Milliseconds until this card becomes due (0 if already due).
+    timeUntilDue: !lastReviewedAt || elapsedDays >= S ? 0 : Math.max(0, (S - elapsedDays) * 86400000),
   };
-}
+  }

@@ -980,6 +980,28 @@ describe('calculateRetention', () => {
     const r = calculateRetention(null, 0.5);
     assert(r.isDue === true);
   });
+
+  it('fresh card reports zero ms until due', () => {
+    const r = calculateRetention(null, 1);
+    assert(r.timeUntilDue === 0);
+  });
+
+  it('card not yet due reports positive ms until due', () => {
+    const r = calculateRetention(earlier(2).toISOString(), 7);
+    assert(r.timeUntilDue > 0);
+    assert(r.timeUntilDue === 5 * 86400000);
+  });
+
+  it('overdue card reports zero ms until due', () => {
+    const r = calculateRetention(earlier(10).toISOString(), 7);
+    assert(r.timeUntilDue === 0);
+  });
+
+  it('timeUntilDue respects interval half day', () => {
+    const r = calculateRetention(earlier(0.25).toISOString(), 0.5);
+    assert(r.timeUntilDue > 0);
+    assert(r.timeUntilDue === 0.25 * 86400000);
+  });
 });
 
 /* ------------------------------- runner -------------------------------- */
