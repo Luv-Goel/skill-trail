@@ -26,7 +26,7 @@ export function calculateRetention(
       percentage: 100,
       color: '#10b981',
       statusText: 'Fresh',
-      isDue: false,
+      isDue: true,
     };
   }
 
@@ -54,6 +54,8 @@ export function calculateRetention(
     percentage,
     color,
     statusText,
-    isDue: elapsedDays >= S,
+    // A card that has never been reviewed is due immediately; otherwise due
+    // once elapsed time passes the stability interval.
+    isDue: !lastReviewedAt ? true : elapsedDays >= S,
   };
 }

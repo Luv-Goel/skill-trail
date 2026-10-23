@@ -13,6 +13,7 @@ import { describe, it, beforeEach, afterEach, assert, eq, near, throws, summary 
 import { edgePath, measureText, nodeSize, handlePoint, handleSide, ensureNodeSized } from '../app/src/lib/renderer';
 import { coveredStatusMap } from '../app/src/lib/cross';
 import { resolveOverlaps } from '../app/src/lib/layout';
+import { calculateRetention } from '../app/src/lib/retention';
 import { generateOPML, generateFreeMind } from '../app/src/lib/exports';
 import { isSafeSlug, isSafeNodeId } from '../server/src/store.js';
 import { normalizeTheme } from '../app/src/lib/api';
@@ -943,5 +944,44 @@ describe('harness self-check', () => {
     assert(caught);
   });
 });
+
+/* ----------------------------- retention ------------------------------ */
+
+describe('calculateRetention', () => {
+  const ONE_DAY_MS = 86400000;
+  const earlier = (days) => new Date(Date.now() - days * ONE_DAY_MS);
+
+  it('fresh card (never reviewed) is due immediately', () => {
+    const r = calculateRetention(null, 1);
+    assert(r.isDue === true);
+    assert(r.percentage === 100);
+    assert(r.statusText === 'Fresh');
+  });
+
+  it('card within stability interval is not due', () => {
+    const r = calculateRetention(earlier(0.5).toISOString(), 7);
+    assert(r.isDue === false);
+    assert(r.percentage > 90);
+  });
+
+  it('card past stability interval is due', () => {
+    const r = calculateRetention(earlier(8).toISOString(), 7);
+    assert(r.isDue === true);
+    assert(r.percentage < 100);
+  });
+
+  it('long-ago review decays toward zero', () => {
+    const r = calculateRetention(earlier(100).toISOString(), 7);
+    assert(r.percentage < 10);
+    assert(r.isDue === true);
+  });
+
+  it('never reviewed with short interval is still due', () => {
+    const r = calculateRetention(null, 0.5);
+    assert(r.isDue === true);
+  });
+});
+
+/* ------------------------------- runner -------------------------------- */
 
 export default summary;
